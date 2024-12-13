@@ -1,4 +1,4 @@
-import { createUser } from "../services/userServices";
+import { createUser } from "../services/user.service";
 import {Request, Response} from 'express';
 
 export async function createUserHandler(req:Request, res:Response ):Promise<Response>{
