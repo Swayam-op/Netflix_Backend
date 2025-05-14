@@ -47,6 +47,7 @@ model Video {
   id String @id @default(cuid())
   title String @unique
   url String
+  resolution Int @default(360)
   createdAt DateTime? @default(now())
   episodes Episode[]
   features Feature[]

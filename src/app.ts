@@ -4,7 +4,7 @@ import cors from 'cors';
 import path from 'path';
 
 const corsOptions = {
-    origin : '*',
+    origin : 'http://localhost:3000',
     methods: ['POST', 'PUT', 'DELETE', 'GET'],
     credentials : true,
     optionsSuccessStatus: 200

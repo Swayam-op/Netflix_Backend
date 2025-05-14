@@ -1,4 +1,4 @@
-import {processVideo} from '../services/video.service';
+import {processHLSWithMasterPlaylist, processVideo, processVideoWithResolution} from '../services/video.service';
 import {Request, Response} from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import fs from 'fs';
@@ -26,27 +26,47 @@ export const uploadVideoHandler = async(req:Request, res:Response)=>{
     const hlsPath = `index.m3u8`;
 
     if(!videoPath){
-        return res.status(402).json({
+        return res.status(400).json({
             message : "File could not be uploaded."
         })
     }
 
     console.log("VideoController : video path : ", videoPath);
+    const {title} = req.body;
+    const resolutions = [180, 240, 360]
+    for(const res of resolutions){
+        const process_video:{
+            status:string,
+            message:string,
+            url : string
+        } = await processVideoWithResolution(videoPath, outputPath, hlsPath, res);
 
+        console.log(title," -> VideoController: video is processed");
+
+        const newVideo = new Video(`${title}_${res}`, process_video.url, res);
+        await newVideo.Save();
+
+        console.log(title, " -> VideoController: video is saved with resolution : ", res);
+    }
+    
+    //Create hls master file
     const process_video:{
         status:string,
         message:string,
         url : string
-    } = await processVideo(videoPath, outputPath, hlsPath);
-
-    console.log("VideoController: video is processed");
-
-    const {title} = req.body;
-    const newVideo = new Video(title, process_video.url);
-    await newVideo.Save();
+    } = await processHLSWithMasterPlaylist(videoPath, outputPath);
     
-    console.log("VideoController: video is saved");
+    const newVideo = new Video(`${title}_master`, process_video.url, 1080);
+    await newVideo.Save();
 
+    console.log(title, " -> VideoController: video is saved with resolution : Master");
+
+    // Remove file from uploads
+    if (fs.existsSync(videoPath)) {
+        fs.unlinkSync(videoPath);
+    }
+  
+    
     res.status(200).json({
         message : "video uploaded successfully.",
         data : null
